@@ -3,13 +3,13 @@ packages <- c("reshape2", "gt", "patchwork", "dplyr", "yarg", "lme4", "raster", 
 suppressWarnings(suppressMessages(lapply(packages, require, character.only = TRUE)))
 
 # source in prediction functions
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS(here::here("outputs/PREDICTS_pollinators_8_exp.rds"))
 
 # read in the fertiliser data
-fert_data <- raster(here::here("fertiliser_application_rate_1.tif"))
+fert_data <- raster(here::here("ouputs/fertiliser_application_rate_1.tif"))
 
 # subset for unqiue sites
 sites.sub_xy <- PREDICTS_pollinators %>%
@@ -25,9 +25,6 @@ sites.sub_xy$fert <- extract(fert_data, sites.sub_xy, na.rm = FALSE)
 
 # turn the spatial points into a dataframe with the fertiliser data
 fert_dat <- data.frame(coords = sites.sub_xy@coords, fert = sites.sub_xy@data$fert)
-
-# count number of unique sites fro cropland with pollinators 
-fert_dat %>% tally() # n = 1578
 
 # build map
 base_map <- get_basemap()
@@ -48,10 +45,6 @@ fert_dat %>%
 # save the intensity plot
 ggsave("site_fertiliser_rate_2.png", scale = 1.2, dpi = 350)
 
-# distribution of fertiliser data
-histogram(fert_dat$fert)
-
-### combine the fertiliser data with PREDICTS for modelling
 # PREDICTS data compilation
 
 # filter cannot decide factors
@@ -94,8 +87,6 @@ order.sites.div$Simpson_diversity <- order.sites.div$Simpson_diversity + 1
 PREDICTS_fert <- inner_join(order.sites.div, fert_dat, by = c("Longitude" = "coords.Longitude", "Latitude" = "coords.Latitude")) %>%
   mutate(fert  = fert + 1)
 
-length(unique(PREDICTS_fert$SSBS))
-
 # table for number of sites in each order
 figure_5_table <- PREDICTS_fert %>%
   group_by(Order) %>%
@@ -110,15 +101,10 @@ figure_5_table <- PREDICTS_fert %>%
     sep_mark = ""
   )
 
-# save the table as png
-gtsave(figure_5_table, "figure_5_table_exp.png")
-
 # species richness
 model_1 <- glmer(Species_richness ~ log10(fert) * Order + (1|SS), data = PREDICTS_fert, family = "poisson")
 model_1a <- glmer(Species_richness ~ log10(fert) * Order + (1|SS) + (1|SSB), data = PREDICTS_fert, family = "poisson")
 model_1b <- glmer(Species_richness ~ log10(fert) * Order + (1|SS) + (1|SSB) + (1|SSBS), data = PREDICTS_fert, family = "poisson")
-
-StatisticalModels::R2GLMER(model_1b) # pseudo R squared
 
 AIC(model_1, model_1a, model_1b)
 
@@ -137,9 +123,7 @@ model_1b_table <- tidy(model_1b) %>%
   tab_header(
     title = "Model summary - species richness (Figure 5)")
 
-# save the model table for figure 2
-write.table(model_1b_table, "figure_5_model_table_species-richness_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
-
+# derive predictions for species richness
 richness_model <- predict_continuous(model = model_1b,
                               model_data = PREDICTS_fert, 
                               response_variable = "Species_richness",
@@ -153,12 +137,6 @@ model_2 <- lmerTest::lmer(log(Total_abundance) ~ log10(fert) * Order + (1|SS) + 
 model_2a <- lmer(log(Total_abundance) ~ log10(fert) * Order + (1|SS), data = PREDICTS_fert)
 
 summary(model_2)
-model_mat <- vcov(model_2)
-
-model_mat[diag(model_mat)]
-
-summary(model_2)
-StatisticalModels::R2GLMER(model_2) # pseudo R squared
 
 AIC(model_2, model_2a)
 
@@ -177,9 +155,7 @@ model_2_table <- tidy(model_2) %>%
   tab_header(
     title = "Model summary - total abundance (Figure 5)")
 
-# save the model table for figure 2
-write.table(model_2_table, "figure_5_model_table_total-abundance_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
-
+# derive predictions for total abundance
 abundance_model <- predict_continuous(model = model_2,
                                      model_data = PREDICTS_fert, 
                                      response_variable = "Total_abundance",
@@ -193,7 +169,6 @@ model_3 <- lmerTest::lmer(log(Simpson_diversity) ~ log10(fert) * Order + (1|SS) 
 model_3a <- lmer(log(Simpson_diversity) ~ log10(fert) * Order + (1|SS), data = PREDICTS_fert)
 
 summary(model_3)
-StatisticalModels::R2GLMER(model_3) # pseudo R squared
 
 AIC(model_3, model_3a)
 
@@ -212,9 +187,7 @@ model_3_table <- tidy(model_3) %>%
   tab_header(
     title = "Model summary - Simpson diversity (Figure 5)")
 
-# save the model table for figure 2
-write.table(model_3_table, "figure_5_model_table_simpson-diversity_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
-
+# derive predictions for simpson diversity
 diversity_model <- predict_continuous(model = model_3,
                                      model_data = PREDICTS_fert, 
                                      response_variable = "Simpson_diversity",
@@ -303,12 +276,6 @@ combined_metrics <- rbind(richness_model, abundance_model, diversity_model) %>%
 # merge the predicted values with the significance
 combined_metrics <- left_join(combined_metrics, p_value_table, by = c("Order" = "reference", "metric" = "variable"))
 
-# percentage changes for fertiliser rate
-exp(3.820123) / exp(2.852199) # hymneoptera - abund
-exp(1.886134) / exp(0.8762602) # lepidoptera - abund
-exp(3.401308) / exp(1.156952) # diptera - abund
-exp(2.2265822) / exp(-0.6760404) # diptera - richness
-
 # then split by class and metric
 separate_frames <- split(combined_metrics, with(combined_metrics, interaction(class, metric)), drop = TRUE)
 
@@ -366,9 +333,6 @@ final_prediction_data <- rbind(model_data(plot_list[[1]]) %>% mutate(metric = "R
   model_data(plot_list[[5]]) %>% mutate(metric = "Diversity") %>% invertebrate_colours(),
   model_data(plot_list[[6]]) %>% mutate(metric = "Diversity") %>% vertebrate_colours()) %>%
   dplyr::select(-colour)
-
-# write fertiliser to csv for datasheet
-# write.csv(final_prediction_data, "fertiliser_predictions.csv")
 
 # combine all the predicted value plots into one multiplot
 {plot_list[[1]] +
