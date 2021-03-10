@@ -9,7 +9,7 @@ library(patchwork)
 library(gt)
 
 # source the functions R scripts
-source("~/PhD/Aims/Aim 1 - collate pollinator knowledge/pollinator_taxonomic_geographic_dist_text-analysis/R/00. functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
@@ -40,9 +40,6 @@ species_count_table <- pollinator_subset %>%
     drop_trailing_zeros = TRUE,
     sep_mark = ""
   )
-
-# save the table as png
-gtsave(species_count_table, "figure_1_table_exp.png")
 
 # build table of counts
 pollinator_subset_tab <- pollinator_subset %>% 
@@ -156,52 +153,3 @@ site_distribution <- ggplot() +
 site_distribution + (order_class + class_conf) + plot_layout(ncol = 1, widths = c(2), height = c(2, 1))
 
 ggsave("conf_class_dist_PRED_14.pdf", dpi = 350, scale = 1.15)
-
-## produce subsets for pollinating genera to send to pollination researchers
-# this was completed with the original pollinator dataset (i.e. PREDICTS_pollinators_6)
-# lepidoptera for checking
-lepidoptera_subset <- PREDICTS_pollinators %>%
-  select(Phylum, Class, Order, Family, Genus) %>% 
-  unique() %>%
-  filter(Genus != "") %>%
-  filter(Order == "Lepidoptera") %>%
-  arrange(Family, Genus)
-
-# write csv for that grouping
-write.csv(lepidoptera_subset, "lepidoptera_pollinator_subset.csv")
-
-# bees/ants for checking
-hymenoptera_subset <- PREDICTS_pollinators %>%
-  select(Phylum, Class, Order, Family, Genus) %>% 
-  unique() %>%
-  filter(Genus != "") %>%
-  filter(Order %in% c("Hymenoptera")) %>%
-  arrange(Family, Genus)
-
-write.csv(hymenoptera_subset, "hymenoptera_pollinator_subset.csv")
-
-# non hymenoptera/lepidoptera insects for checking
-other_insects_subset <- PREDICTS_pollinators %>%
-  select(Phylum, Class, Order, Family, Genus) %>% 
-  unique() %>%
-  filter(Genus != "") %>%
-  filter(Phylum == "Arthropoda") %>%
-  filter(!Order %in% c("Hymenoptera", "Lepidoptera")) %>%
-  arrange(Order, Family, Genus)
-
-write.csv(other_insects_subset, "other_insect_pollinator_subset.csv")
-
-# vertebrates for checking
-vertebrate_subset <- PREDICTS_pollinators %>%
-  select(Phylum, Class, Order, Family, Genus) %>% 
-  unique() %>%
-  filter(Genus != "") %>%
-  filter(Phylum == "Chordata") %>%
-  arrange(Order, Family, Genus)
-
-write.csv(vertebrate_subset, "vertebrate_pollinator_subset.csv")
-
-# total number of rows is 1478, which is the same as the original subset
-sum(nrow(vertebrate_subset), nrow(other_insects_subset), nrow(hymenoptera_subset), nrow(lepidoptera_subset))
-
-    
