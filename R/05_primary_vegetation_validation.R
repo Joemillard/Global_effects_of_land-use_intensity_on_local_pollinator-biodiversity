@@ -6,10 +6,10 @@ packages <- c("dplyr", "yarg", "cowplot", "here",
 lapply(packages, require, character.only = TRUE)
 
 # read in extra functions
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in the forest data
-hansen_tree_cover <- raster(here::here("Data/forest_data/Hansen_full.tif"))
+hansen_tree_cover <- raster(here::here("data/forest_data/Hansen_full.tif"))
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
