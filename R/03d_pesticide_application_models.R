@@ -3,13 +3,13 @@ packages <- c("patchwork", "dplyr", "yarg", "lme4", "raster", "rworldmap", "rwor
 suppressWarnings(suppressMessages(lapply(packages, require, character.only = TRUE)))
 
 # source in prediction functions
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS(here::here("outputs/PREDICTS_pollinators_8_exp.rds"))
 
 ## read in the pesticide data to merge onto the sites
-pesticide_high <- raster("C:/Users/joeym/Documents/PhD/Aims/Aim 4 - climate land use interaction effects on pollinators/outputs/2015_Pesticide_totalAPR_High_cropped.tif")
+pesticide_high <- raster("outputs/2015_Pesticide_totalAPR_High_cropped.tif")
 
 # subset for unqiue sites
 sites.sub_xy <- PREDICTS_pollinators %>%
