@@ -37,10 +37,6 @@ PREDICTS_pollinators_intense <- PREDICTS_pollinators_intense %>%
 PREDICTS_pollinators_intense$zone <- ifelse(PREDICTS_pollinators_intense$Latitude >= -23.5 & PREDICTS_pollinators_intense$Latitude <= 23.5, "Tropics", "Temperate")
 PREDICTS_pollinators_intense$zone <- factor(PREDICTS_pollinators_intense$zone, levels = c("Temperate", "Tropics"))
 
-# check for site representation for sites to filter out
-site_count <- PREDICTS_pollinators_intense %>% dplyr::select(Class, LUI, Order, SSBS) %>% unique()
-site_count %>% filter(Class != "Insecta") %>% group_by(Order, LUI) %>% tally() %>% filter(n >= 1) %>% View()
-
 # filter the metrics for those with greater than 50 sites
 PREDICTS_pollinators_intense <- PREDICTS_pollinators_intense[PREDICTS_pollinators_intense$Order %in% c("Hymenoptera", "Lepidoptera", "Diptera", "Coleoptera", "Passeriformes", "Apodiformes"),]
 
@@ -76,9 +72,6 @@ order.sites.div$Order <- factor(order.sites.div$Order, levels = c("Hymenoptera",
 order.sites.div$Total_abundance <- order.sites.div$Total_abundance + 1
 order.sites.div$Simpson_diversity <- order.sites.div$Simpson_diversity + 1
 
-# count number of unique sites for 6 main orders on cropland
-length(unique(order.sites.div$SSBS))
-
 # build table for site representation
 figure_4_table <- order.sites.div %>%
   group_by(Order, LUI) %>%
@@ -91,9 +84,6 @@ figure_4_table <- order.sites.div %>%
     drop_trailing_zeros = TRUE,
     sep_mark = ""
   )
-
-# save the table as png
-gtsave(figure_4_table, "figure_4_table_exp.png")
 
 ### models - richness (with interaction)
 model_1 <- glmer(Species_richness ~ Order * LUI + (1|SS), data = order.sites.div, family = poisson)
@@ -110,7 +100,6 @@ model_1b <- glmer(Species_richness ~ Order * LUI + (1|SS) + (1|SSB) + (1|SSBS), 
 summary(model_1b)
 StatisticalModels::GLMEROverdispersion(model_1b)
 AIC(model_1b) # best model
-StatisticalModels::R2GLMER(model_1b) # pseudo R squared
 
 AIC(model_1, model_1a, model_1b)
 
@@ -130,10 +119,6 @@ model_1b_table <- tidy(model_1b) %>%
   tab_header(
     title = "Model summary - species richness (Figure 4)")
 
-# save the model table for figure 2
-write.table(model_1b_table, "figure_4_model_table_species-richness_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
-
-### run function for each of biodiversity metrics
 # predict corrected effects for species richness
 richness_metric <- predict_effects(iterations = 1000, 
                                    model = model_1b, 
@@ -160,12 +145,9 @@ model_data(richness_metric)
 ## abundance models
 model_2 <- lmer(log(Total_abundance) ~ Order * LUI + (1|SS), data = order.sites.div)
 summary(model_2)
-StatisticalModels::GLMEROverdispersion(model_2)
 
 model_2a <- lmerTest::lmer(log(Total_abundance) ~ Order * LUI + (1|SS) + (1|SSB), data = order.sites.div)
 summary(model_2a)
-StatisticalModels::GLMEROverdispersion(model_2a)
-StatisticalModels::R2GLMER(model_2a) # pseudo R squared
 
 AIC(model_2, model_2a) # best model
 
@@ -184,9 +166,6 @@ model_2a_table <- tidy(model_2a) %>%
   gt() %>%
   tab_header(
     title = "Model summary - total abundance (Figure 4)")
-
-# save the model table for figure 2
-write.table(model_2a_table, "figure_4_model_table_species_total abundance_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
 
 # predict corrected effects for total abundance
 abundance_metric <- predict_effects(iterations = 1000, 
@@ -214,12 +193,9 @@ model_data(abundance_metric)
 ## diversity models
 model_3 <- lmer(log(Simpson_diversity) ~ Order * LUI + (1|SS), data = order.sites.div)
 summary(model_3)
-StatisticalModels::GLMEROverdispersion(model_3_int)
 
 model_3a <- lmerTest::lmer(log(Simpson_diversity) ~ Order * LUI + (1|SS) + (1|SSB), data = order.sites.div)
 summary(model_3a)
-StatisticalModels::GLMEROverdispersion(model_3a)
-StatisticalModels::R2GLMER(model_3a) # pseudo R squared
 
 AIC(model_3, model_3a) # best model
 
@@ -238,9 +214,6 @@ model_3a_int <- tidy(model_3a) %>%
   gt() %>%
   tab_header(
     title = "Model summary - Simpson diversity (Figure 4)")
-
-# save the model table for figure 2
-write.table(model_3a_int, "figure__model_4_table_simpson-diversity_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
 
 # predict corrected effects for diversity models
 diversity_metric <- predict_effects(iterations = 1000, 
