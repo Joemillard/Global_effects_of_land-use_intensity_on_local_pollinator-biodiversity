@@ -4,7 +4,7 @@ lapply(packages, require, character.only = TRUE)
 
 # extra packages called in place -- plyr and StatisticalModels
 
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # Tim's roquefort function for spatial autocorrelation
 SpatialAutocorrelationTest<-function(model,all.data,siteModel=TRUE){
@@ -17,10 +17,8 @@ SpatialAutocorrelationTest<-function(model,all.data,siteModel=TRUE){
     model.data$res<-residuals(model)
   }
   
-  
   model.data$Longitude<-all.data$Longitude[match(model.data$SSBS,all.data$SSBS)]
   model.data$Latitude<-all.data$Latitude[match(model.data$SSBS,all.data$SSBS)]
-  
   
   studies<-character()
   failed<-character()
@@ -62,8 +60,6 @@ SpatialAutocorrelationTest<-function(model,all.data,siteModel=TRUE){
   }
   
   return(list(studies=studies,I=moran.i,P=moran.p,failed=failed))
-  
-  
   
 }
 
