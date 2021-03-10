@@ -5,7 +5,7 @@ packages <- c("dplyr", "yarg", "cowplot", "lme4", "MASS", "raster", "spdep")
 lapply(packages, require, character.only = TRUE)
 
 # source in scripts for deriving predictions
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
@@ -48,8 +48,8 @@ PRED_sites <- pollinator_metrics %>%
 
 # read in the climate data for each set of predicts dates
 # list the climate specific folders in this directory
-temp_dirs <- list.dirs("G:/Extra_data_files/world_clim/temp", recursive = FALSE)
-precip_dirs <- list.dirs("G:/Extra_data_files/world_clim/precip", recursive = FALSE)
+temp_dirs <- list.dirs("data/world_clim/temp", recursive = FALSE)
+precip_dirs <- list.dirs("data/world_clim/precip", recursive = FALSE)
 
 # set up a list for the directories for temperature and precipitation
 climate_dirs <- list(temp_dirs, precip_dirs)
