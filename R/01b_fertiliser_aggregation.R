@@ -7,7 +7,7 @@ library(rasterVis)
 # Charlie's calculation from total application
 
 # list the crop specific folders in this directory
-cropdirs <- list.dirs(here("Data/Charlie_intensity_analogues/FertilizerCropSpecific_Geotiff"), recursive = FALSE)
+cropdirs <- list.dirs(here("data/FertilizerCropSpecific_Geotiff"), recursive = FALSE)
 
 # loop through each directory and create a list of all files
 all.ras <- NULL
@@ -31,14 +31,14 @@ for(i in 1:length(unlisted_crops)){
 # organise all of the rasters into a stack and sum - change so don't remove 0 values
 stacked_rasters <- stack(rate_rasters)
 fert.total <- sum(stacked_rasters, na.rm = T)
-#values(fert.total)[values(fert.total) == 0] <- NA
 
-writeRaster(fert.total, NAflag = -3.4e+38, "fertiliser_application_rate_1.tif", overwrite = TRUE)
+# write raster
+writeRaster(fert.total, NAflag = -3.4e+38, "outputs/fertiliser_application_rate_1.tif", overwrite = TRUE)
 
-# read in new ate raster
+# read in new rasterfor checking
 fertiliser_raster <- raster("fertiliser_application_rate_1.tif")
 
-# plot the rate raster
+# plot the rate raster to check values 
 gplot(fertiliser_raster) +
   geom_raster(aes(fill = value), alpha = 0.7, na.rm = T) +
   scale_fill_distiller(direction = 1, name = "Tons") +
