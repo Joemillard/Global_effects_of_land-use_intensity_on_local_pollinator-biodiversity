@@ -98,9 +98,6 @@ PREDICTS_expert <- PREDICTS_taxa_6 %>% filter(Family %in% c("Siricidae", "Tenthr
   mutate(clade_rank = NA) %>%
   mutate(confidence = 5.4)
 
-# write the leftover species in predicts it rds
-# saveRDS(PREDICTS_taxa_6, "predicts_non-pollinating_2.rds")
-
 ### combine together all genera from PREDICTS with confidence
 # pollinat_dataframes
 pollinat_dataframes <- list(PREDICTS_direct,
