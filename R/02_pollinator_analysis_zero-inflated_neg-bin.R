@@ -6,15 +6,10 @@ lapply(packages, require, character.only = TRUE)
 
 # extra packages called in place -- plyr and StatisticalModels
 
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
-
-# check use_intensity and use_type factors
-table(PREDICTS_pollinators$Use_intensity)
-table(PREDICTS_pollinators$Predominant_land_use)
-table(PREDICTS_pollinators$Predominant_land_use, PREDICTS_pollinators$Use_intensity)
 
 # filter cannot decide factors
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
@@ -94,9 +89,10 @@ pollinator_metrics <- pollinator_metrics %>%
                                     "Urban-Light use" = "ULU",
                                     "Urban-Intense use" = "UIU")))
 
-### richness - because only 1 fixed effect, select model random effect structure on basis of AIC
+# richness glmer model
 model_1b <- glmer(Species_richness ~ LUI + (1|SS) + (1|SSB) + (1|SSBS), data = pollinator_metrics, family = poisson) 
 
+# derive predictions for species richness
 richness_metric <- predict_effects(iterations = 1000, 
                                    model = model_1b, 
                                    model_data = pollinator_metrics, 
@@ -105,10 +101,10 @@ richness_metric <- predict_effects(iterations = 1000,
                                    fixed_column = "LUI",
                                    neg_binom = FALSE)
 
-
-# lmer with log transformation
+# total abundacne glmmTMB model
 model_2a <- glmmTMB::glmmTMB(Total_abundance ~ LUI + (1|SS) + (1|SSB), data = pollinator_metrics, ziformula = ~1, family = list(family = "nbinom2", link = "log"))
 
+# derive predictions for abundance
 abundance_metric <- predict_effects(iterations = 1000, 
                                     model = model_2a, 
                                     model_data = pollinator_metrics, 
@@ -117,8 +113,10 @@ abundance_metric <- predict_effects(iterations = 1000,
                                     fixed_column = "LUI",
                                     neg_binom = TRUE)
 
+# Simpson diversity glmmTMB model
 model_3a <- glmmTMB::glmmTMB(Simpson_diversity ~ LUI + (1|SS) + (1|SSB), data = pollinator_metrics, ziformula = ~0, family = list(family = "nbinom2", link = "log")) 
 
+ # derive predictions for simpson diversity
 diversity_metric <- predict_effects(iterations = 1000, 
                                     model = model_3a, 
                                     model_data = pollinator_metrics, 
@@ -127,6 +125,7 @@ diversity_metric <- predict_effects(iterations = 1000,
                                     fixed_column = "LUI", 
                                     neg_binom = TRUE)
 
+# combined the plots into a single figure
 plot_grid((richness_metric + ggtitle("A")), 
           (abundance_metric + guides(shape = FALSE) + ggtitle("B")), 
           (diversity_metric + guides(shape = FALSE) + ggtitle("C")),
