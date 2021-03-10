@@ -5,13 +5,13 @@
 packages <- c("dplyr", "yarg", "lme4", "cowplot", "raster", "ggplot2", "MASS")
 lapply(packages, require, character.only = TRUE)
 
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # bring in the forest data and merge with the PREDICTS sites
 ## calculate forest extent for each predicts primary vegetation site
 
 # read in the forest data
-hansen_tree_cover <- raster(here::here("Data/forest_data/Hansen_full.tif"))
+hansen_tree_cover <- raster(here::here("data/forest_data/Hansen_full.tif"))
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
@@ -147,17 +147,10 @@ for(i in 1:length(forest_cover)){
                                            neg_binom = FALSE)
 }
 
-
-abundance_object[[1]]
-richness_object[[1]]
-
-abundance_object[[2]]
-richness_object[[2]] + scale_y_continuous("")
-
+# combine separate plots into single figure
 plot_grid((richness_object[[1]] + xlab("")  + ggtitle("Low forest cover baseline (cover <= 40%)") + theme(legend.position = "none")),
           (richness_object[[2]] + xlab("") + scale_y_continuous("") + ggtitle("High forest cover baseline (cover >= 60%)") + theme(legend.position = "none")),
           abundance_object[[1]] + xlab("")  + theme(legend.position = "none", plot.title = element_text(hjust = 0.5)),
           abundance_object[[2]] + xlab("") + ylab("NULL") + scale_y_continuous("") + theme(legend.position = c(0.75, 0.65), legend.background = element_rect(colour = "black"), plot.title = element_text(hjust=0.5)), ncol = 2)
           
-
 ggsave("variable_baseline_temperate_tropical_3.png", scale = 1.1, dpi = 350)
