@@ -4,15 +4,10 @@ lapply(packages, require, character.only = TRUE)
 
 # extra packages called in place -- plyr and StatisticalModels
 
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
-
-# check use_intensity and use_type factors
-table(PREDICTS_pollinators$Use_intensity)
-table(PREDICTS_pollinators$Predominant_land_use)
-table(PREDICTS_pollinators$Predominant_land_use, PREDICTS_pollinators$Use_intensity)
 
 # filter cannot decide factors
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
@@ -21,27 +16,14 @@ PREDICTS_pollinators <- PREDICTS_pollinators %>%
   dplyr::filter(Predominant_land_use != "Secondary vegetation (indeterminate age)") %>%
   droplevels()
 
-# number of sites and species after moving unknown land-use intensity and type
-length(unique(PREDICTS_pollinators$SSBS))
-
 # bind together the intensity and type into a single variable
 PREDICTS_pollinators$LUI <- paste(PREDICTS_pollinators$Predominant_land_use, PREDICTS_pollinators$Use_intensity, sep = "-")
-
-# check the taxa in PREDICTS_pollinators
-PREDICTS_pollinators %>% group_by(Order) %>% tally()
-
-# count the number of sites - Mature secondary intense (5), Intermediate secondary intense (56), Urban intense (44)
-site_count <- PREDICTS_pollinators %>% dplyr::select(LUI, SSBS) %>% unique()
-table(site_count$LUI)
 
 # filter out the factors with low representation
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
   dplyr::filter(LUI != "Mature secondary vegetation-Intense use") %>%
   dplyr::filter(LUI != "Intermediate secondary vegetation-Intense use") %>%
   droplevels()
-
-# re-check the number for each factor for LUI
-table(PREDICTS_pollinators$LUI)
 
 # correct for sampling effort
 PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
@@ -78,6 +60,7 @@ pollinator_metrics$LUI <- factor(pollinator_metrics$LUI, levels = c("Primary veg
                                                                     "Urban-Minimal use",
                                                                     "Urban-Light use",
                                                                     "Urban-Intense use"))
+# drop left-over factor levels
 pollinator_metrics <- droplevels(pollinator_metrics)
 
 # convert all factor levels to a short acronynm for spacing
@@ -123,26 +106,19 @@ figure_2_table <- pollinator_metrics %>%
     sep_mark = ""
   )
 
-# save the table as png
-gtsave(figure_2_table, "figure_2_table_exp.png")
-
 ### richness - because only 1 fixed effect, select model random effect structure on basis of AIC
 model_1 <- glmer(Species_richness ~ LUI + (1|SS), data = pollinator_metrics, family = poisson)
 summary(model_1)
-blmeco::dispersion_glmer(model_1) 
 StatisticalModels::GLMEROverdispersion(model_1) # model_1 is slightly overdispersed
 
 model_1a <- glmer(Species_richness ~ LUI + (1|SS) + (1|SSB), data = pollinator_metrics, family = poisson)
 summary(model_1a)
-blmeco::dispersion_glmer(model_1a)
 StatisticalModels::GLMEROverdispersion(model_1a)
 
 model_1b <- glmer(Species_richness ~ LUI + (1|SS) + (1|SSB) + (1|SSBS), data = pollinator_metrics, family = poisson) # best model - failed to converge with 0.00144612
 summary(model_1b)
 anova(model_1b)
-blmeco::dispersion_glmer(model_1b)
 StatisticalModels::GLMEROverdispersion(model_1b)
-StatisticalModels::R2GLMER(model_1b) # psuedo R squared
 
 # check the AIC values - random structure from model_1b is lowest
 AIC(model_1, model_1a, model_1b)
@@ -151,9 +127,6 @@ AIC(model_1, model_1a, model_1b)
 model_1b_intercept <- glmer(Species_richness ~ 1 + (1|SS) + (1|SSB) + (1|SSBS), data = pollinator_metrics, family = poisson) # best model - failed to converge with 0.00144612
 
 AIC(model_1b, model_1b_intercept)
-
-# save the table as png
-gtsave(selection_table, "selection_table_figure-2.png")
 
 # build table of best fitting model
 model_1b_table <- tidy(model_1b) %>% 
@@ -165,14 +138,7 @@ model_1b_table <- tidy(model_1b) %>%
   tab_header(
     title = "Model summary - species richness (Figure 2)")
 
-# save the model table for figure 2
-write.table(model_1b_table, file = "figure_2_model_table_species-richness_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
-
-## test for singularity - i.e. is the random effects structure too complicated - singularity od models is fine
-tt <- getME(model_1b,"theta")
-ll <- getME(model_1b,"lower")
-min(tt[ll==0])
-
+# derive predictions for the richness model
 richness_metric <- predict_effects(iterations = 1000, 
                                    model = model_1b, 
                                    model_data = pollinator_metrics, 
@@ -181,18 +147,12 @@ richness_metric <- predict_effects(iterations = 1000,
                                    fixed_column = "LUI",
                                    neg_binom = FALSE)
 
-# calculate change differences between minimal and intense
-1.3787537 - -12.2919790 # cropland -- 13.67073
-28.4879540 - -17.7894560 # urban -- 46.27741
-29.8538621 - -11.0959624 # plantation -- 40.94982
-3.8570759 - -14.8166883 # YSV -- 18.67376
-
-# new approach following comments from reviewers
+# new approach for calculating percentage change following comments from reviewers
 ((10*1.26152911 - 10/1.19782141) / 10) * 100 # urban -- 42.66801
 ((10*1.27581931 - 10/1.11060222) / 10) * 100 # plantation -- 37.54069
 ((10*1.02093625 - 10/1.15724824) / 10) * 100 # YSV -- 15.68174
 
-# extract all the values for the data for a table of all values
+# extract all the values for the data for a table of all values for source data
 model_data <- function(model_plot){
   ggplot_build(model_plot)$data[[2]] %>%
     dplyr::select(y) %>%
@@ -207,15 +167,10 @@ model_data(richness_metric)
 ### abundance
 model_2 <- lmer(log(Total_abundance) ~ LUI + (1|SS), data = pollinator_metrics) 
 summary(model_2)
-blmeco::dispersion_glmer(model_2)
-StatisticalModels::GLMEROverdispersion(model_2)
 
 # lmer with log transformation
 model_2a <- lmerTest::lmer(log(Total_abundance) ~ LUI + (1|SS) + (1|SSB), data = pollinator_metrics) # best model
 summary(model_2a)
-blmeco::dispersion_glmer(model_2a)
-StatisticalModels::GLMEROverdispersion(model_2a)
-StatisticalModels::R2GLMER(model_2a) # psuedo R squared
 
 # check the AIC values - random structure from model_2a is lowest
 AIC(model_2, model_2a)
@@ -234,11 +189,9 @@ model_2a_table <- broom::tidy(model_2a) %>%
   tab_header(
     title = "Model summary - total abundance (Figure 2)")
 
-# save the model table for figure 2
-write.table(model_2a_table, "figure_2_model_table_total-abundance_exp.txt", sep = ",", row.names = FALSE, quote = FALSE)
-
 AIC(model_2a, model_2a_intercept)
 
+# derive predictions for the abundance model
 abundance_metric <- predict_effects(iterations = 1000, 
                                     model = model_2a, 
                                     model_data = pollinator_metrics, 
@@ -247,12 +200,7 @@ abundance_metric <- predict_effects(iterations = 1000,
                                     fixed_column = "LUI",
                                     neg_binom = FALSE)
 
-# calculate change differences between minimal and intense
-10.380178 - -22.345210 # cropland -- 32.72539
-56.193825 - -12.08269 # urban -- 68.27651
-100.444960 - 38.751851 # pasture -- 61.69311
-
-# new approach following comments from reviewers
+# new approach for calculating percentage change following comments from reviewers
 ((10*1.5355206012 - 10/1.0874067897) / 10) * 100 # urban -- 61.59016
 ((10*1.7948945791 - 10*1.0481701986) / 10) * 100 # pasture -- 74.67244
 
@@ -262,12 +210,8 @@ model_data(abundance_metric)
 ### diversity
 model_3 <- lmer(log(Simpson_diversity) ~ LUI + (1|SS), data = pollinator_metrics)
 summary(model_3)
-blmeco::dispersion_glmer(model_3)
-StatisticalModels::GLMEROverdispersion(model_3)
 
 model_3a <- lmer(log(Simpson_diversity) ~ LUI + (1|SS) + (1|SSB), data = pollinator_metrics) # best model
-blmeco::dispersion_glmer(model_3a)
-StatisticalModels::GLMEROverdispersion(model_3a)
 
 # check the AIC values - random structure from model_3a is lowest
 AIC(model_3, model_3a)
@@ -284,24 +228,7 @@ model_3a_table <- tidy(model_3a) %>%
   tab_header(
     title = "Figure 2 model summary - Simpson diversity")
 
-# save the model table for figure 2
-gtsave(model_3a_table, "figure_2_model_table_Simpson-diversity_2.png")
-
 AIC(model_3a, model_3a_intercept)
-
-diversity_metric <- predict_effects(iterations = 1000, 
-                                    model = model_3a, 
-                                    model_data = pollinator_metrics, 
-                                    response_variable = "Simpson_diversity",
-                                    fixed_number = 1,
-                                    fixed_column = "LUI",
-                                    neg_binom = FALSE)
-
-# calculate change differences between minimal and intense
-13.1768599 - -10.2620296 # plantation -- 23.43889
-2.21554099 - 1.58619415 # pasture -- 0.6293468
-0.93416323 - -8.92496678 # cropland -- 9.85913
-4.2119062 - -9.2766568 # YSV -- 13.48856
 
 # table of AICs
 selection_table <- data.frame("Response" = c(rep("Species richness", 2),
@@ -321,10 +248,12 @@ selection_table <- data.frame("Response" = c(rep("Species richness", 2),
   ungroup() %>%
   gt()
 
+# combine the plots for Simpson diversity and total abundance into single figure
 plot_grid((richness_metric + ggtitle("A") + theme(axis.title.y = element_text(size = 14))), 
           (abundance_metric + guides(shape = FALSE) + ggtitle("B") + theme(axis.title.y = element_text(size = 14))) + 
           NULL,
           NULL,
           ncol = 2)
 
+# save the final plot
 ggsave("all_metrics_resampling_approach_7.pdf", dpi = 400, scale = 1.5)
