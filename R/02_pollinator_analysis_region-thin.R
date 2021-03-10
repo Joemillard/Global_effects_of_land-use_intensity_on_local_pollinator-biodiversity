@@ -4,7 +4,7 @@
 packages <- c("dplyr", "yarg", "patchwork", "gt", "webshot", "lme4", "broom.mixed", "MASS")
 lapply(packages, require, character.only = TRUE)
 
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
@@ -171,6 +171,7 @@ for(i in 1:length(UN_regions)){
   }
 }
 
+# combine all the plots into a single figure
 {(jacked_plots[[1]] + jacked_plots[[2]] + jacked_plots[[3]] + jacked_plots[[4]] + jacked_plots[[5]])} + plot_layout(ncol = 1)
 
 ggsave("UN_region_jack.png", dpi = 350, scale = 1.5)
