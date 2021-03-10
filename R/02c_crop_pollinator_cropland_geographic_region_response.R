@@ -4,18 +4,10 @@ lapply(packages, require, character.only = TRUE)
 
 # extra packages called in place -- plyr and StatisticalModels
 
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
-
-# check use_intensity and use_type factors
-table(PREDICTS_pollinators$Use_intensity)
-table(PREDICTS_pollinators$Predominant_land_use)
-table(PREDICTS_pollinators$Predominant_land_use, PREDICTS_pollinators$Use_intensity)
-
-# check the distribution of factors for intensity and type
-table(PREDICTS_pollinators$Predominant_land_use, PREDICTS_pollinators$Use_intensity)
 
 # bind together the intensity and type into a single variable
 PREDICTS_pollinators$LUI <- paste(PREDICTS_pollinators$Predominant_land_use, PREDICTS_pollinators$Use_intensity, sep = "-")
@@ -29,12 +21,6 @@ PREDICTS_pollinators <- PREDICTS_pollinators %>%
   dplyr::filter(!Family %in% c("Siricidae", "Tenthredinidae")) %>%
   droplevels()
   
-# check the taxa in PREDICTS_pollinators
-PREDICTS_pollinators %>% group_by(Order) %>% tally()
-
-# re-check the number for each factor for LUI
-table(PREDICTS_pollinators$LUI)
-
 # correct for sampling effort
 PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
 
@@ -71,9 +57,9 @@ pollinator_metrics$Simpson_diversity <- pollinator_metrics$Simpson_diversity + 1
 
 model_1b <- glmer(Species_richness ~ LUI * zone + (1|SS) + (1|SSB) + (1|SSBS), data = pollinator_metrics, family = poisson) # best model - failed to converge with 0.00144612
 summary(model_1b)
-blmeco::dispersion_glmer(model_1b)
 StatisticalModels::GLMEROverdispersion(model_1b)
 
+# predict values for species richness
 richness_metric <- predict_effects(iterations = 1000,
                                    model = model_1b, 
                                    model_data = pollinator_metrics, 
@@ -85,10 +71,8 @@ richness_metric <- predict_effects(iterations = 1000,
                                    neg_binom = FALSE)
 
 model_2a <- lmer(log(Total_abundance) ~ LUI * zone + (1|SS) + (1|SSB), data = pollinator_metrics) # best model
-blmeco::dispersion_glmer(model_2a)
-StatisticalModels::GLMEROverdispersion(model_2a)
 
-# predict values from the model                                
+# predict values from the model for abundance                               
 abundance_metric <- predict_effects(iterations = 1000,
                                     model = model_2a, 
                                     model_data = pollinator_metrics, 
@@ -99,21 +83,7 @@ abundance_metric <- predict_effects(iterations = 1000,
                                     fixed_column = c("zone", "LUI"),
                                     neg_binom = FALSE)
 
-### diversity
-model_3a <- lmer(log(Simpson_diversity) ~ LUI * zone + (1|SS) + (1|SSB), data = pollinator_metrics) # best model
-blmeco::dispersion_glmer(model_3a)
-StatisticalModels::GLMEROverdispersion(model_3a)
-
-diversity_metric <- predict_effects(iterations = 1000,
-                                    model = model_3a, 
-                                    model_data = pollinator_metrics, 
-                                    response_variable = "Simpson_diversity",
-                                    fixed_number = 2,
-                                    factor_number_1 = 2,
-                                    factor_number_2 = 4,
-                                    fixed_column = c("zone", "LUI"),
-                                    neg_binom = FALSE)
-
+# combine the separate plots into a single figure
 (richness_metric + xlab("") + ggtitle("A") + scale_x_discrete(labels = c("Non-tropical", "Tropical"))) + 
   (abundance_metric + ggtitle("B") + xlab("") + scale_x_discrete(labels = c("Non-tropical", "Tropical")) + guides(colour = FALSE)) + 
   plot_layout(ncol = 1) & 
