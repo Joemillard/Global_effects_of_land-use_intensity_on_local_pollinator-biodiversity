@@ -36,7 +36,7 @@ fert.total <- sum(stacked_rasters, na.rm = T)
 writeRaster(fert.total, NAflag = -3.4e+38, "outputs/fertiliser_application_rate_1.tif", overwrite = TRUE)
 
 # read in new rasterfor checking
-fertiliser_raster <- raster("fertiliser_application_rate_1.tif")
+fertiliser_raster <- raster("outputs/fertiliser_application_rate_1.tif")
 
 # plot the rate raster to check values 
 gplot(fertiliser_raster) +
