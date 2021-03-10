@@ -7,12 +7,10 @@ suppressWarnings(suppressMessages(lapply(packages, require, character.only = TRU
 # extra packages called in place -- plyr and StatisticalModels
 
 # source in additional functions
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
-PREDICTS_pollinators <- readRDS(here::here("outputs/PREDICTS_pollinators_8_exp.rds"))
-
-PREDICTS_pollinators_intense <- PREDICTS_pollinators
+PREDICTS_pollinators_intense <- readRDS(here::here("outputs/PREDICTS_pollinators_8_exp.rds"))
 
 ### taxa - use intensity
 PREDICTS_pollinators_intense$Order_use <- paste(PREDICTS_pollinators_intense$Order, PREDICTS_pollinators_intense$Use_intensity, sep = "-")
@@ -149,7 +147,7 @@ summary(model_2)
 model_2a <- lmerTest::lmer(log(Total_abundance) ~ Order * LUI + (1|SS) + (1|SSB), data = order.sites.div)
 summary(model_2a)
 
-AIC(model_2, model_2a) # best model
+AIC(model_2, model_2a)
 
 model_2a_LUI <- lmer(log(Total_abundance) ~ LUI + (1|SS) + (1|SSB), data = order.sites.div)
 model_2a_int <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = order.sites.div)
