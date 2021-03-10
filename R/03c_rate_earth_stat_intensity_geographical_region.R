@@ -5,13 +5,13 @@ packages <- c("patchwork", "dplyr", "yarg", "cowplot",
 lapply(packages, require, character.only = TRUE)
 
 # source in prediction functions
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS(here::here("outputs/PREDICTS_pollinators_8_exp.rds"))
 
 # read in the fertiliser data
-fert_data <- raster(here::here("fertiliser_application_rate.tif"))
+fert_data <- raster(here::here("outputs/fertiliser_application_rate.tif"))
 
 # subset for unqiue sites
 sites.sub_xy <- PREDICTS_pollinators %>%
@@ -28,7 +28,6 @@ sites.sub_xy$fert <- extract(fert_data, sites.sub_xy, na.rm = FALSE)
 # turn the spatial points into a dataframe with the fertiliser data
 fert_dat <- data.frame(coords = sites.sub_xy@coords, fert = sites.sub_xy@data$fert)
 
-### combine the fertiliser data with PREDICTS for modelling
 # PREDICTS data compilation
 
 # filter cannot decide factors
@@ -88,9 +87,6 @@ model_1_table <- tidy(model_1) %>%
   tab_header(
     title = "Figure 4 model summary - species richness")
 
-# save the model table for figure 2
-gtsave(model_1_table, "figure_4_model_table_species-richness.png")
-
 # predict for tropics/temperate for species richness
 richness_model <- predict_continuous(model = model_1,
                                      model_data = PREDICTS_fert, 
@@ -119,9 +115,7 @@ model_2_table <- tidy(model_2) %>%
   tab_header(
     title = "Figure 4 model summary - total abundance")
 
-# save the model table for figure 2
-gtsave(model_2_table, "figure_4_model_table_total abundance.png")
-
+# derive predictions for abundance
 abundance_model <- predict_continuous(model = model_2,
                                       model_data = PREDICTS_fert, 
                                       response_variable = "Total_abundance",
@@ -149,9 +143,7 @@ model_3_table <- tidy(model_3) %>%
   tab_header(
     title = "Figure 4 model summary - Simpson diversity")
 
-# save the model table for figure 2
-gtsave(model_3_table, "figure_4_model_table_Simpson-diversity.png")
-
+# derive predictions for simpson diversity
 diversity_model <- predict_continuous(model = model_3,
                                       model_data = PREDICTS_fert, 
                                       response_variable = "Simpson_diversity",
@@ -202,6 +194,7 @@ for(i in 1:length(plot_list)){
 
 # retrieve the legend to put at bottom right panel
 add_legend <- get_legend(
+  
   # create some space to the left of the legend
   plot_list[[1]] +
     theme(legend.background = element_rect(colour = "white"),
