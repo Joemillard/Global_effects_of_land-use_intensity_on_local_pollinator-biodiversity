@@ -4,7 +4,7 @@ lapply(packages, require, character.only = TRUE)
 
 # extra packages called in place -- plyr and StatisticalModels
 
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
@@ -24,9 +24,6 @@ PREDICTS_pollinators <- PREDICTS_pollinators %>%
   dplyr::filter(LUI != "Mature secondary vegetation-Intense use") %>%
   dplyr::filter(LUI != "Intermediate secondary vegetation-Intense use") %>%
   droplevels()
-
-# re-check the number for each factor for LUI
-table(PREDICTS_pollinators$LUI)
 
 # correct for sampling effort
 PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
