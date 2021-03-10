@@ -66,7 +66,6 @@ order_class <- bound_group_pollinat %>%
     geom_bar(aes(x = Order, y = n, fill = Class), stat = "identity") +
     theme_bw() +
     ylab("Species count") +
-    #xlab("Order") +
     labs(subtitle = "B") +
     scale_y_continuous(limits = c(0, 2500), expand = c(0, 0)) +
     scale_fill_viridis(discrete = TRUE, option = "magma") +
