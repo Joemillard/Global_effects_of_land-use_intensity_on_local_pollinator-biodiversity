@@ -5,7 +5,7 @@ packages <- c("dplyr", "yarg", "cowplot", "lme4", "MASS", "raster", "spdep")
 lapply(packages, require, character.only = TRUE)
 
 # source in scripts for deriving predictions
-source("Scripts/global_analysis/Land-use_intensity_predicts_differential_effects_on_global_pollinator_biodiversity/00_functions.R")
+source("R/00_functions.R")
 
 # read in rds for PREDICTS pollinators
 PREDICTS_pollinators <- readRDS("outputs/PREDICTS_pollinators_8_exp.rds")
@@ -85,14 +85,13 @@ pollinator_metrics <- pollinator_metrics %>%
                                            "Urban-Light use" = "ULU",
                                            "Urban-Intense use" = "UIU")))
 
-# multi panel plot of abundance, richness, and diversity
-# add 1 for abundance and simpson diversity
-pollinator_metrics$Total_abundance <- pollinator_metrics$Total_abundance + 1
-pollinator_metrics$Simpson_diversity <- pollinator_metrics$Simpson_diversity + 1
+# round Chao's richness for poisson glmer
 pollinator_metrics$ChaoR <- round(pollinator_metrics$ChaoR)
 
-model_1b <- glmer(ChaoR ~ LUI + (1|SS) + (1|SSB) + (1|SSBS), data = pollinator_metrics, family = poisson) # best model - failed to converge with 0.00144612
+# run model for Chao's richness
+model_1b <- glmer(ChaoR ~ LUI + (1|SS) + (1|SSB) + (1|SSBS), data = pollinator_metrics, family = poisson)
 
+# derive predictions for chao's richness
 richness_metric <- predict_effects(iterations = 1000, 
                                    model = model_1b, 
                                    model_data = pollinator_metrics, 
