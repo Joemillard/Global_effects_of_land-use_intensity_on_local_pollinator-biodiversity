@@ -249,7 +249,9 @@ selection_table <- data.frame("Response" = c(rep("Species richness", 2),
   gt()
 
 # combine the plots for Simpson diversity and total abundance into single figure
-plot_grid((richness_metric + ggtitle("A") + theme(axis.title.y = element_text(size = 14))), 
+plot_grid((richness_metric + ggtitle("A") + theme(axis.title.y = element_text(size = 14), 
+                                                  legend.background = element_blank(), 
+                                                  legend.text = element_text(size = 13))), 
           (abundance_metric + guides(shape = FALSE) + ggtitle("B") + theme(axis.title.y = element_text(size = 14))) + 
           NULL,
           NULL,
