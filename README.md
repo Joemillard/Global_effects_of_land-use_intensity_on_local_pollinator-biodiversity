@@ -1,5 +1,7 @@
 # Global effects of land-use intensity on local pollinator biodiversity
 
+[![DOI](https://zenodo.org/badge/346324215.svg)](https://zenodo.org/badge/latestdoi/346324215) [![Generic badge](https://img.shields.io/badge/License-MIT-green.svg)](https://shields.io/)
+
 This repository contains all the scripts used for the analysis carried out in the below study:
 
 > **Millard _et al_. (2021), Global effects of land-use intensity on local pollinator biodiveristy. _Nature Communications_ DOI: https://doi.org/10.1038/s41467-021-23228-3
